@@ -10,9 +10,9 @@ def get_available_path(directory, filename, extension) :
     if os.path.exists(full_path) :
         i = 0
         new_file = '{}{}.{}'.format(filename, i, extension)
-        while not os.path.exists(os.path.join(directory, new_file)) :
+        while os.path.exists(os.path.join(directory, new_file)) :
             i += 1
-        new_file = '{}{}.{}'.format(filename, i, extension)
+            new_file = '{}{}.{}'.format(filename, i, extension)
         
         full_path = os.path.join(directory, new_file)
 
