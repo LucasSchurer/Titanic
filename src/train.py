@@ -1,4 +1,4 @@
-from sklearn.model_selection import cross_val_score, RandomizedSearchCV, GridSearchCV
+from sklearn.model_selection import RandomizedSearchCV, GridSearchCV
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.tree import DecisionTreeClassifier
 import pandas as pd
@@ -11,34 +11,6 @@ import model
 import config
 import utilities
 
-def get_search_results_overview(search_results, thresholds = None, order_by='mean_test_score', ascending=True) :    
-        
-    # display('Best estimator: {}'.format(search_results.best_params_))
-    # display('Best score: {}'.format(search_results.best_score_))
-
-    if thresholds != None :
-        df = pd.DataFrame(search_results.cv_results_)             
-    
-        for key in thresholds :
-            if len(thresholds[key]) == 1 :
-                df = df.loc[df[key] >= thresholds[key][0]]
-            else :    
-                df = df.loc[df[key] <= thresholds[key][0] if thresholds[key][1] == 'max' else df[key] >= thresholds[key][0]]
-            
-        df = df.sort_values(order_by, ascending=ascending)
-        
-        param_columns = []
-        
-        for column in df.columns :
-            if 'param' in column :
-                param_columns.append(column)
-        
-        score_columns = ['mean_test_score', 'std_test_score']
-        
-        df = df[score_columns + param_columns]
-        
-        return df
-
 def randomized_search(model : model.Model, params, X_train, y_train, n_iter=100, 
                       cv=5, verbose=3, random_state=None, 
                       n_jobs=-1, save_cv_results=True, save_best_estimator=True) :
@@ -50,7 +22,7 @@ def randomized_search(model : model.Model, params, X_train, y_train, n_iter=100,
     search.fit(X_train, y_train)
     
     if save_cv_results :
-        save_search(search, 'random search', model.directory, save_best_estimator)
+        save_search(search, 'random_search', model.directory, save_best_estimator)
 
     return search
 
@@ -64,26 +36,25 @@ def grid_search(model : model.Model, params, X_train, y_train, scoring='accuracy
     search.fit(X_train, y_train)
         
     if save_cv_results :
-        save_search(search, 'grid search', model.directory, save_best_estimator)
+        save_search(search, 'grid_search', model.directory, save_best_estimator)
         
     return search
 
 def save_search(search, search_type, directory, save_best_estimator = True) :
     current_time = utilities.get_current_time()
     
-    filename = '{} - {}'.format(search_type, current_time)
-    search_directory = os.path.join(directory, 'search_results')
+    filename = search_type
+    directory = os.path.join(directory, current_time)
     
-    path = utilities.get_available_path(search_directory, filename, 'csv')
+    path = utilities.get_available_path(directory, filename, 'joblib')
     
-    pd.DataFrame(search.cv_results_).to_csv(path)
-    
+    joblib.dump(search, path)
+
     if save_best_estimator :
         score = search.best_score_
-        filename = '{}'.format(score)
-        model_directory = directory
+        filename = 'best_estimator - {:.4f}'.format(score)
         
-        path = utilities.get_available_path(model_directory, filename, 'joblib')
+        path = utilities.get_available_path(directory, filename, 'joblib')
 
         joblib.dump(search.best_estimator_, path)
 

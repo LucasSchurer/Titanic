@@ -128,6 +128,16 @@ class TrainingData() :
         y = data['survived']
         
         return X, y
+    
+    def save_transformed_data(self, path) :
+        columns = self.preprocessor.transformer.get_feature_names_out()
+        
+        X_df = pd.DataFrame(self.X, columns=columns)
+        y_df = pd.DataFrame(self.y, columns=['survived'])
+
+        df_transformed = pd.DataFrame.join(X_df, y_df)
+        
+        df_transformed.to_csv(path, index=False)
 
 class TestData() :
     def __init__(self, preprocessor : Preprocessor) :
