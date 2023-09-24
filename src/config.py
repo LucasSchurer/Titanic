@@ -1,0 +1,5 @@
+DATA_PATH = './data'
+MODEL_PATH = './models'
+TRANSFORMER_PATH = './data/transformer.joblib'
+RANDOM_FOREST_PATH = './models/random_forest'
+PREDICTIONS_PATH = './predictions'
