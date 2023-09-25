@@ -52,6 +52,68 @@ class AgeTransformer(BaseEstimator, TransformerMixin) :
     def get_feature_names_out(self, feature_names) :
         return ['age']
 
+class TitleTransformer(BaseEstimator, TransformerMixin) :
+    def __init__(self) :
+        self.titles = {
+            'title_Miss': 'Miss.',
+            'title_Mrs' : 'Mrs.',
+            'title_Mme' : 'Mme.',
+            'title_Ms' : 'Ms.',
+            'title_Countess' : 'Countess.',
+            'title_Master' : 'Master.',
+            'title_Mr' : 'Mr.',
+            'title_Rev' : 'Rev.',
+            'title_Don' : 'Don.',
+            'title_Major' : 'Major.',
+            'title_Col' : 'Col.',
+            'title_Capt' : 'Capt.',
+            'title_Jonkheer' : 'Jonkheer.',
+            'title_Dr': 'Dr.'
+            }
+    
+    def fit(self, X, y=None) :
+        return self
+    
+    def transform(self, X, y=None) :
+        for title in self.titles :
+            X[title] = 0
+
+        X['title_Other'] = 0
+
+        for title in self.titles :
+            X[title] = X.apply(
+                lambda row :
+                    1 if self.titles[title] in row['name'] else 0,
+                axis=1
+            ) 
+
+        list_keys = list(self.titles.keys())
+            
+        X['title_Other'] = X.apply(
+            lambda row :
+                1 if sum(row[list_keys]) == 0 else 0,
+            axis=1
+        )
+        
+        return X.drop(columns='name')
+    
+    def get_feature_names_out(self, feature_names) :
+        return list(self.titles.keys()) + ['title_Other']
+
+class FamilyCombinerTransformer(BaseEstimator, TransformerMixin) :
+    def fit(self, X, y=None) :
+        return self
+    
+    def transform(self, X, y=None) :
+        X['family'] = X['sibsp'] + X['parch']
+
+        X = X.drop(columns=['sibsp', 'parch'])
+        
+        return X
+    
+    def get_feature_names_out(self, feature_names) :
+        return ['family']
+
 class Preprocessor() :
     def __init__(self) :
         self.transformer = None
@@ -80,10 +142,21 @@ class Preprocessor() :
         age_transformer_features = ['age', 'sex', 'name']
         numerical_transformer_features = [x for x in features.numerical_features if x not in age_transformer_features]
 
+        numerical_transformer_features.remove('sibsp')
+        numerical_transformer_features.remove('parch')
+
+        title_transformer_features = ['name']
+        title_transformer = TitleTransformer()
+        
+        family_combiner_transformer = FamilyCombinerTransformer()
+        family_combiner_transformer_features = ['sibsp', 'parch']
+
         transformer = ColumnTransformer( [
             ('age_transformer', age_transformer, age_transformer_features),
+            ('family_combiner_transformer', family_combiner_transformer, family_combiner_transformer_features),
             ('numerical_transformer', numerical_transformer, numerical_transformer_features),
             ('categorical_transformer', categorical_transformer, features.categorical_features),
+            ('title_transformer', title_transformer, title_transformer_features)
         ], verbose_feature_names_out=False)
         
         self.transformer = transformer
