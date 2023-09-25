@@ -9,15 +9,15 @@ import utilities
 from model import models
 
 def output_prediction_csv(test_df, predictions) :
-    predictions_df = pd.DataFrame(predictions, columns=['Survived'])
+    predictions_df = pd.DataFrame(predictions, columns=['survived'])
     
     test_df = test_df['passengerid']
     
     test_df = pd.DataFrame.join(test_df, predictions_df)
     
-    path = utilities.get_available_path(config.PREDICTIONS_PATH, 'prediction', '.csv')
+    path = utilities.get_available_path(config.PREDICTIONS_PATH, 'prediction', 'csv')
     
-    test_df[['passengerid', 'passengerid']].to_csv(path, index=False)
+    test_df[['passengerid', 'survived']].to_csv(path, index=False)
     
 if __name__ == '__main__' :
     preprocessor = data.Preprocessor()
@@ -26,7 +26,7 @@ if __name__ == '__main__' :
     test_data = data.TestData(preprocessor)    
     
     model = models['random_forest']
-    model.load('final')
+    model.load('rf')
     
     predictions = model.predict(test_data.X)
     output_prediction_csv(test_data.test_df, predictions)

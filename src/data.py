@@ -55,20 +55,11 @@ class AgeTransformer(BaseEstimator, TransformerMixin) :
 class TitleTransformer(BaseEstimator, TransformerMixin) :
     def __init__(self) :
         self.titles = {
-            'title_Miss': 'Miss.',
-            'title_Mrs' : 'Mrs.',
-            'title_Mme' : 'Mme.',
-            'title_Ms' : 'Ms.',
-            'title_Countess' : 'Countess.',
-            'title_Master' : 'Master.',
-            'title_Mr' : 'Mr.',
-            'title_Rev' : 'Rev.',
-            'title_Don' : 'Don.',
-            'title_Major' : 'Major.',
-            'title_Col' : 'Col.',
-            'title_Capt' : 'Capt.',
-            'title_Jonkheer' : 'Jonkheer.',
-            'title_Dr': 'Dr.'
+            'title_Mr' : ['Mr.', 'Don.', 'Major.', 'Col.', 'Capt.', 'Jonkheer'],
+            'title_Mrs' : ['Mrs.', 'Mme.', 'Countess.', 'Miss.', 'Ms.'],
+            'title_Master' : ['Master.'],
+            'title_Rev' : ['Rev.'],
+            'title_Dr': ['Dr.']
             }
     
     def fit(self, X, y=None) :
@@ -83,7 +74,7 @@ class TitleTransformer(BaseEstimator, TransformerMixin) :
         for title in self.titles :
             X[title] = X.apply(
                 lambda row :
-                    1 if self.titles[title] in row['name'] else 0,
+                    self.__get_title_value(self.titles[title], row['name']),
                 axis=1
             ) 
 
@@ -96,6 +87,13 @@ class TitleTransformer(BaseEstimator, TransformerMixin) :
         )
         
         return X.drop(columns='name')
+    
+    def __get_title_value(self, title, name) :
+        for i in title :
+            if i in name :
+                return 1
+            
+        return 0
     
     def get_feature_names_out(self, feature_names) :
         return list(self.titles.keys()) + ['title_Other']
@@ -144,6 +142,9 @@ class Preprocessor() :
 
         numerical_transformer_features.remove('sibsp')
         numerical_transformer_features.remove('parch')
+        
+        categorical_transformer_features = features.categorical_features
+        categorical_transformer_features.remove('sex')
 
         title_transformer_features = ['name']
         title_transformer = TitleTransformer()
@@ -155,7 +156,7 @@ class Preprocessor() :
             ('age_transformer', age_transformer, age_transformer_features),
             ('family_combiner_transformer', family_combiner_transformer, family_combiner_transformer_features),
             ('numerical_transformer', numerical_transformer, numerical_transformer_features),
-            ('categorical_transformer', categorical_transformer, features.categorical_features),
+            ('categorical_transformer', categorical_transformer, categorical_transformer_features),
             ('title_transformer', title_transformer, title_transformer_features)
         ], verbose_feature_names_out=False)
         

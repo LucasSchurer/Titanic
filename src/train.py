@@ -59,12 +59,12 @@ def save_search(search, search_type, directory, save_best_estimator = True) :
         joblib.dump(search.best_estimator_, path)
 
 def rf_randomized_search_params(print_params = False) :
-    n_estimators = [int(x) for x in np.linspace(100, 200, num=20)]
+    n_estimators = np.arange(100, 200, 5)
     max_features = ['sqrt', 'log2']
-    max_depth = [int(x) for x in np.linspace(10, 100, num=20)]
+    max_depth = [np.arange(30, 80, 2)]
     max_depth.append(None)
-    min_samples_split = np.arange(2, 10, 2)
-    min_samples_leaf = np.arange(2, 20, 2)
+    min_samples_split = [2, 4, 6]
+    min_samples_leaf = np.arange(2, 10, 2)
     bootstrap = [True]
     
     params = {
@@ -83,26 +83,15 @@ def rf_randomized_search_params(print_params = False) :
     return params
     
 def rf_grid_search_params(print_params = False) :
-    # n_estimators = [int(x) for x in np.linspace(100, 200, num=20)]
-    # max_features = ['sqrt', 'log2']
-    # max_depth = [int(x) for x in np.linspace(10, 100, num=20)]
-    # max_depth.append(None)
-    # min_samples_split = np.arange(2, 10, 2)
-    # min_samples_leaf = np.arange(2, 20, 2)
-    # bootstrap = [True]
-    
-    n_estimators = [100, 200]
+    n_estimators = np.arange(120, 150, 5)
     max_features = ['sqrt', 'log2']
-    max_depth = [2, 4, 6]
-    max_depth.append(None)
-    min_samples_split = [2, 4]
-    min_samples_leaf = [2, 4, 6]
+    min_samples_split = [4, 6, 8]
+    min_samples_leaf = [4, 6]
     bootstrap = [True]
     
     params = {
         'n_estimators': n_estimators,
         'max_features': max_features,
-        'max_depth': max_depth,
         'min_samples_split': min_samples_split,
         'min_samples_leaf': min_samples_leaf,
         'bootstrap': bootstrap
@@ -146,8 +135,17 @@ def dt_grid_search_params(print_params = False) :
 if __name__ == '__main__' :
     training_data = data.TrainingData()
     
-    rf = model.Model(directory=config.RANDOM_FOREST_PATH)
-    rf.model = RandomForestClassifier()
-    params = rf_grid_search_params(False)
+    # training_data.preprocessor.save_transformer(utilities.get_available_path(config.DATA_PATH, 'transformer', 'joblib'))
     
-    search_results = grid_search(rf, params, training_data.X, training_data.y)
+    rf = model.Model(config.RANDOM_FOREST_PATH)
+    rf.load('rf')
+    rf.fit(training_data.X, training_data.y)
+
+    scores = rf.cross_val_score(training_data.X, training_data.y, cv=15)
+    print(scores)
+    print(scores.mean())
+    print(scores.std())
+    
+    rf.save('rf')
+    
+    
